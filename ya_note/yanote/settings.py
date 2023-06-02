@@ -80,6 +80,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+NOTES_COUNT_ON_HOME_PAGE = 10
+
+AUTHOR_COUNT = 10
 
 STATIC_URL = '/static/'
 
