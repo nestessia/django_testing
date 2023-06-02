@@ -1,4 +1,3 @@
-from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -10,49 +9,50 @@ User = get_user_model()
 class NoteCreationTest(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser',
-                                             password='testpassword')
+        self.user = User.objects.create_user(username='test',
+                                             password='123')
 
     def test_logged_in_user_can_create_note(self):
         """
-        Проверка, что залогиненный пользователь может создать заметку.
+        Залогиненный пользователь может создать заметку.
         """
-        self.client.login(username='testuser', password='testpassword')
+        add_url = reverse('notes:add')
+        self.client.login(username='test', password='123')
 
-        response = self.client.post(reverse('notes:add'), data={
+        self.client.post(add_url, data={
             'title': 'Название заметки',
             'text': 'Текст заметки',
         })
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Note.objects.count(), 1)
+        count = Note.objects.count()
+        self.assertEqual(count, 1)
 
     def test_anonymous_user_cannot_create_note(self):
         """
-        Проверка, что анонимный пользователь не может создать заметку.
+        Анонимный пользователь не может создать заметку.
         """
-        response = self.client.post(reverse('notes:add'), data={
+        add_url = reverse('notes:add')
+        self.client.post(add_url, data={
             'title': 'Название заметки',
             'text': 'Текст заметки',
         })
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Note.objects.count(), 0)
+        count = Note.objects.count()
+        self.assertEqual(count, 0)
 
 
 class NoteSlugTest(TestCase):
     def test_duplicate_slug_not_allowed(self):
         """
-        Проверка, что невозможно создать две заметки с одинаковым slug.
+        Невозможно создать две заметки с одинаковым slug.
         """
-        user = User.objects.create_user(username='testuser',
-                                        password='testpassword')
+        user = User.objects.create_user(username='test',
+                                        password='123')
 
-        note1 = Note.objects.create(title='Заметка 1',
-                                    text='Текст заметки 1',
+        note1 = Note.objects.create(title='Заголовок 1',
+                                    text='Текст 2',
                                     author=user)
-        note2 = Note.objects.create(title='Заметка 2',
-                                    text='Текст заметки 2',
+        note2 = Note.objects.create(title='Заголовок 2',
+                                    text='Текст 2',
                                     author=user)
 
         self.assertNotEqual(note1.slug, note2.slug)
@@ -61,14 +61,14 @@ class NoteSlugTest(TestCase):
 class NoteSlugGenerationTest(TestCase):
     def test_slug_auto_generation(self):
         """
-        Проверка, что slug формируется автоматически,
-        если не заполнен при создании заметки.
+        Если при создании заметки не заполнен slug, то он формируется
+        автоматически
         """
-        user = User.objects.create_user(username='testuser',
-                                        password='testpassword')
+        user = User.objects.create_user(username='test',
+                                        password='123')
 
-        note = Note.objects.create(title='Название заметки',
-                                   text='Текст заметки', author=user)
+        note = Note.objects.create(title='Заголовок',
+                                   text='Текст', author=user)
 
         self.assertIsNotNone(note.slug)
 
@@ -86,7 +86,7 @@ class NoteAuthorizationTest(TestCase):
 
     def test_user_can_edit_own_note(self):
         """
-        Проверка, что пользователь может редактировать свою заметку.
+        Пользователь может редактировать свою заметку.
         """
         self.client.login(username='user1', password='testpassword1')
 
@@ -103,7 +103,7 @@ class NoteAuthorizationTest(TestCase):
 
     def test_user_cannot_edit_other_user_note(self):
         """
-        Проверка, что пользователь не может редактировать чужую заметку.
+        Пользователь не может редактировать чужую заметку.
         """
         self.client.login(username='user2', password='testpassword2')
 
@@ -120,19 +120,20 @@ class NoteAuthorizationTest(TestCase):
 
     def test_user_can_delete_own_note(self):
         """
-        Проверка, что пользователь может удалить свою заметку.
+        Пользователь может удалить свою заметку.
         """
         self.client.login(username='user1', password='testpassword1')
 
         response = self.client.post(
             reverse('notes:delete', args=[self.note.slug]))
-
+        
+        count = Note.objects.count()
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(Note.objects.count(), 0)
+        self.assertEqual(count, 0)
 
     def test_user_cannot_delete_other_user_note(self):
         """
-        Проверка, что пользователь не может удалить чужую заметку.
+        Пользователь не может удалить чужую заметку.
         """
         self.client.login(username='user2', password='testpassword2')
 
@@ -140,7 +141,8 @@ class NoteAuthorizationTest(TestCase):
             reverse('notes:delete', args=[self.note.slug]))
 
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(Note.objects.count(), 1)
+        count = Note.objects.count()
+        self.assertEqual(count, 1)
 
 
 

@@ -59,9 +59,7 @@ class NoteTestCase(TestCase):
         response = self.client.get(
             reverse('notes:detail', args=[self.note.slug]))
         self.assertRedirects(response, login_url + reverse(
-            'notes:detail',
-            args=[
-                self.note.slug]))
+            'notes:detail', args=[self.note.slug]))
 
         response = self.client.get(
             reverse('notes:edit', args=[self.note.slug]))
@@ -71,15 +69,14 @@ class NoteTestCase(TestCase):
         response = self.client.get(
             reverse('notes:delete', args=[self.note.slug]))
         self.assertRedirects(response, login_url + reverse(
-            'notes:delete',
-            args=[
-                self.note.slug]))
+            'notes:delete', args=[self.note.slug]))
 
     def test_note_detail_page_redirects_to_login_for_unauthorized_user(self):
         """
         Проверка, что страница с подробностями заметки
         перенаправляет на страницу входа для неавторизованного пользователя.
         """
+
         note = Note.objects.create(title='Another Note',
                                    text='Another Note Text',
                                    author=User.objects.create_user(
