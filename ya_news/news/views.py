@@ -52,6 +52,7 @@ class NewsComment(
     form_class = CommentForm
     template_name = 'news/detail.html'
     context_object_name = 'context'
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         return super().post(request, *args, **kwargs)
@@ -83,6 +84,7 @@ class CommentBase(LoginRequiredMixin):
     """Базовый класс для работы с комментариями."""
     model = Comment
     context_object_name = 'context'
+
     def get_success_url(self):
         comment = self.get_object()
         return reverse(

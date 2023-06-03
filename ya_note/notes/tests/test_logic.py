@@ -125,7 +125,7 @@ class NoteAuthorizationTest(TestCase):
         self.client.login(username='user1', password='testpassword1')
 
         response = self.client.post(
-            reverse('notes:delete', args=[self.note.slug]))  
+            reverse('notes:delete', args=[self.note.slug]))
         count = Note.objects.count()
         self.assertEqual(response.status_code, 302)
         self.assertEqual(count, 0)
