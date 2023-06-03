@@ -24,29 +24,29 @@ def test_authenticated_user_can_post_comment():
     Авторизованный пользователь может отправить комментарий.
     """
     User.objects.create_user(username='NAME', password='PASS')
-    news = News.objects.create(title='Test News', text='This is a test news')
-    initial_comment_count = Comment.objects.filter(news=news).count()
-
+    news = News.objects.create(title='TITLE', text='TEXT')
+    first_comment_count = Comment.objects.filter(news=news).count()
     client = Client()
     client.login(username='NAME', password='PASS')
     client.post(reverse('news:detail', kwargs={'pk': news.pk}),
-                {'text': 'This is a comment'})
-    updated_comment_count = Comment.objects.filter(news=news).count()
-    assert updated_comment_count == initial_comment_count + 1
+                {'text': 'COMMENT TEXT'})
+    second_comment_count = Comment.objects.filter(news=news).count()
+    assert second_comment_count == first_comment_count + 1
     comment = Comment.objects.last()
     assert comment.news == news
 
 
 @pytest.mark.django_db
 def test_comment_with_bad_words_not_published():
-    User.objects.create_user(username='testuser', password='testpassword')
+    '''Если комментарий содержит запрещённые слова, он не будет опубликован,
+    а форма вернёт ошибку.'''
+    User.objects.create_user(username='USERNAME', password='PASSWORD')
     news = News.objects.create(title='Test News', text='This is a test news')
     initial_comment_count = Comment.objects.filter(news=news).count()
-
     client = Client()
-    client.login(username='testuser', password='testpassword')
+    client.login(username='USERNAME', password='PASSWORD')
     response = client.post(reverse('news:detail', kwargs={'pk': news.pk}),
-                           data={'text': 'This is a bad word'})
+                           data={'text': 'BAD WORD TEXT'})
     updated_comment_count = Comment.objects.filter(news=news).count()
     assert updated_comment_count == initial_comment_count + 1
     if response.context is not None:
@@ -57,26 +57,28 @@ def test_comment_with_bad_words_not_published():
 
 @pytest.mark.django_db
 def test_authenticated_user_can_edit_or_delete_own_comments():
-    """
+    '''
     Авторизованный пользователь может редактировать или удалять свои
     комментарии.
-    Авторизованный пользователь не может редактировать или удалять
-    чужие комментарии.
-    """
-    user1 = User.objects.create_user(username='user1', password='password1')
-    User.objects.create_user(username='user2', password='password2')
+    '''
+    user = User.objects.create_user(username='NAME', password='PASSWORD')
+    User.objects.create_user(username='NAME2', password='PASSWORD2')
     news = News.objects.create(title='Test News', text='This is a test news')
-    comment = Comment.objects.create(news=news, author=user1,
+    comment = Comment.objects.create(news=news, author=user,
                                      text='This is a comment')
     client = Client()
-    client.login(username='user1', password='password1')
+    client.login(username='NAME', password='PASSWORD')
     response = client.get(reverse('news:edit', kwargs={'pk': comment.pk}))
     assert response.status_code == 200
     assert 'form' in response.context
     assert isinstance(response.context['form'], CommentForm)
     response = client.get(reverse('news:delete', kwargs={'pk': comment.pk}))
     assert response.status_code == 200
-    client.login(username='user2', password='password2')
+    client.login(username='NAME2', password='PASSWORD2')
+    '''
+    Авторизованный пользователь не может редактировать или удалять
+    чужие комментарии.
+    '''
     response = client.get(reverse('news:edit', kwargs={'pk': comment.pk}))
     assert response.status_code == 404
     response = client.get(reverse('news:delete', kwargs={'pk': comment.pk}))
