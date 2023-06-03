@@ -5,6 +5,7 @@ from django.test import Client
 from news.models import Comment, News
 from django.contrib.auth.models import User
 
+
 @pytest.fixture
 def client():
     return Client()
@@ -68,7 +69,8 @@ def test_anon_redirect_after_edit_page(client):
     response = client.get(reverse('news:edit', kwargs={'pk': comment.pk}))
     assert response.status_code == 302
     assert response.url == '/auth/login/?next=' + reverse('news:edit',
-                                                          kwargs={'pk': comment.pk})
+                                                          kwargs={'pk':
+                                                                  comment.pk})
 
 
 @pytest.mark.django_db
@@ -85,7 +87,8 @@ def test_anon_redirect_after_delete_page(client):
     response = client.get(reverse('news:delete', kwargs={'pk': comment.pk}))
     assert response.status_code == 302
     assert response.url == '/auth/login/?next=' + reverse('news:delete',
-                                                          kwargs={'pk': comment.pk})
+                                                          kwargs={'pk':
+                                                                  comment.pk})
 
 
 @pytest.mark.django_db
@@ -102,8 +105,9 @@ def test_anon_cant_go_to_edit_page_another_user(client):
     response = client.get(reverse('news:edit', kwargs={'pk': comment.pk}))
     assert response.status_code == 302
     assert response.url == '/auth/login/?next=' + reverse('news:edit',
-                                                          kwargs={'pk': comment.pk})
-    
+                                                          kwargs={'pk':
+                                                                  comment.pk})
+
 
 @pytest.mark.django_db
 def test_anon_cant_go_to_delete_page_another_user(client):
@@ -119,12 +123,14 @@ def test_anon_cant_go_to_delete_page_another_user(client):
     response = client.get(reverse('news:delete', kwargs={'pk': comment.pk}))
     assert response.status_code == 302
     assert response.url == '/auth/login/?next=' + reverse('news:delete',
-                                                          kwargs={'pk': comment.pk})
+                                                          kwargs={'pk':
+                                                                  comment.pk})
 
 
 @pytest.mark.django_db
 def test_anon_can_go_to_login_sign_up_out_pages(client):
-    '''Страницы регистрации пользователей, входа в учётную запись и выхода из неё доступны анонимным пользователям.'''
+    '''Страницы регистрации пользователей, входа в учётную запись и
+    выхода из неё доступны анонимным пользователям.'''
     client = Client()
     response = client.get(reverse('users:signup'))
     assert response.status_code == 200
@@ -132,4 +138,3 @@ def test_anon_can_go_to_login_sign_up_out_pages(client):
     assert response.status_code == 200
     response = client.get(reverse('users:logout'), follow=True)
     assert response.status_code == 200
-
