@@ -4,27 +4,28 @@ from django.test import Client
 from django.urls import reverse
 from news.forms import CommentForm
 from news.models import Comment, News
+from news.forms import BAD_WORDS
+from django.test import TestCase
 
 
 @pytest.mark.django_db
-def test_anonymous_user_cannot_post_comment():
+def test_anonymous_user_cannot_post_comment(news):
     """
     Анонимный пользователь не может отправить комментарий.
     """
-    news = News.objects.create(title='Title', text='Text')
     client = Client()
-    response = client.post(reverse('news:detail', kwargs={'pk': news.pk}))
+    response = client.post(reverse('news:detail', kwargs={'pk': news().pk}))
     assert response.status_code == 302
     assert response.url.startswith(reverse('users:login'))
 
 
 @pytest.mark.django_db
-def test_authenticated_user_can_post_comment():
+def test_authenticated_user_can_post_comment(news):
     """
     Авторизованный пользователь может отправить комментарий.
     """
     User.objects.create_user(username='NAME', password='PASS')
-    news = News.objects.create(title='TITLE', text='TEXT')
+    news = news()
     first_comment_count = Comment.objects.filter(news=news).count()
     client = Client()
     client.login(username='NAME', password='PASS')
@@ -37,22 +38,22 @@ def test_authenticated_user_can_post_comment():
 
 
 @pytest.mark.django_db
-def test_comment_with_bad_words_not_published():
-    '''Если комментарий содержит запрещённые слова, он не будет опубликован,
-    а форма вернёт ошибку.'''
-    User.objects.create_user(username='USERNAME', password='PASSWORD')
-    news = News.objects.create(title='Test News', text='This is a test news')
-    initial_comment_count = Comment.objects.filter(news=news).count()
-    client = Client()
-    client.login(username='USERNAME', password='PASSWORD')
-    response = client.post(reverse('news:detail', kwargs={'pk': news.pk}),
-                           data={'text': 'BAD WORD TEXT'})
-    updated_comment_count = Comment.objects.filter(news=news).count()
-    assert updated_comment_count == initial_comment_count + 1
-    if response.context is not None:
-        assert 'form' in response.context
-        assert isinstance(response.context['form'], CommentForm)
-        assert 'text' in response.context['form'].errors
+class MyTests(TestCase):
+    def test_comment_with_bad_words_not_published(self):
+        '''Если комментарий содержит запрещённые слова, он не будет
+        опубликован, а форма вернёт ошибку.'''
+        User.objects.create_user(username='USERNAME', password='PASSWORD')
+        news = News.objects.create(title='Test News',
+                                   text='This is a test news')
+        initial_comment_count = Comment.objects.filter(news=news).count()
+        client = Client()
+        client.login(username='USERNAME', password='PASSWORD')
+        for word in BAD_WORDS:
+            response = client.post(reverse('news:detail',
+                                           kwargs={'pk': news.pk}),
+                                   data={'text': word})
+            assert initial_comment_count == 0
+        self.assertFormError(response, 'context', 'form', 'Не ругайтесь!')
 
 
 @pytest.mark.django_db
