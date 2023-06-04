@@ -45,7 +45,7 @@ def test_sorted_comments(news, comment):
     client.login(username='name', password='password')
     comment_1 = Comment.objects.create(news=news, text='Comment 1',
                                        author=user)
-    comment_2 = Comment.objects.create( 
+    comment_2 = Comment.objects.create(
         news=news, text='Comment 2', author=user)
     comment_3 = Comment.objects.create(news=news, text='Comment 3',
                                        author=user)
