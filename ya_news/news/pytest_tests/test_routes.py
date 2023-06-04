@@ -1,7 +1,6 @@
 from http import HTTPStatus
 from django.urls import reverse
 import pytest
-from django.test import Client
 from news.models import Comment, News
 from django.contrib.auth.models import User
 

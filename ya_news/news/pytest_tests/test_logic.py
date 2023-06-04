@@ -4,8 +4,9 @@ from django.test import Client
 from django.urls import reverse
 from news.forms import CommentForm
 from news.models import Comment, News
-from news.forms import BAD_WORDS
-from django.test import TestCase
+from news.forms import BAD_WORDS, WARNING
+from pytest_django.asserts import assertFormError
+from random import choice
 
 
 @pytest.mark.django_db
@@ -38,22 +39,19 @@ def test_authenticated_user_can_post_comment(news):
 
 
 @pytest.mark.django_db
-class MyTests(TestCase):
-    def test_comment_with_bad_words_not_published(self):
-        '''Если комментарий содержит запрещённые слова, он не будет
-        опубликован, а форма вернёт ошибку.'''
-        User.objects.create_user(username='USERNAME', password='PASSWORD')
-        news = News.objects.create(title='Test News',
-                                   text='This is a test news')
-        initial_comment_count = Comment.objects.filter(news=news).count()
-        client = Client()
-        client.login(username='USERNAME', password='PASSWORD')
-        for word in BAD_WORDS:
-            response = client.post(reverse('news:detail',
-                                           kwargs={'pk': news.pk}),
-                                   data={'text': word})
-            assert initial_comment_count == 0
-        self.assertFormError(response, 'context', 'form', 'Не ругайтесь!')
+def test_comment_with_bad_words_not_published(news):
+    '''Если комментарий содержит запрещённые слова, он не будет
+    опубликован, а форма вернёт ошибку.'''
+    User.objects.create_user(username='USERNAME', password='PASSWORD')
+    news = news()
+    initial_comment_count = Comment.objects.filter(news=news).count()
+    client = Client()
+    client.login(username='USERNAME', password='PASSWORD')
+    response = client.post(reverse('news:detail',
+                           kwargs={'pk': news.pk}),
+                           data={'text': choice(BAD_WORDS)})
+    assert initial_comment_count == 0
+    assertFormError(response, 'form', 'text', WARNING)
 
 
 @pytest.mark.django_db
